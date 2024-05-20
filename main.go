@@ -6,6 +6,8 @@ import (
 )
 
 func main() {
+
+
     config := utils.LoadConfig("config.json")
 
     screen := utils.InitScreen()

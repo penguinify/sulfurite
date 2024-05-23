@@ -59,6 +59,8 @@ func FancyText(screen tcell.Screen, x int, y int, text string, style tcell.Style
     for i, char := range text {
         screen.SetContent(x + i, y, char, nil, style)
     }
+
+    screen.Show()
 }
 
 
@@ -66,15 +68,17 @@ func DrawText(screen tcell.Screen, x int, y int, text string) {
     for i, char := range text {
         screen.SetContent(x + i, y, char, nil, tcell.StyleDefault)
     }
+
+    screen.Show()
 }
 
 // PARA SELECCIONAR
 func (s *Selection) draw(screen tcell.Screen) {
-    DrawText(screen, s.Coord.X, s.Coord.Y, s.Title)
+    DrawText(screen, s.Coord.X + 2, s.Coord.Y, s.Title)
     for i, option := range s.Options {
         i++
         if i == s.Selected {
-            DrawText(screen, s.Coord.X, s.Coord.Y + i, "> " + option)
+            FancyText(screen, s.Coord.X, s.Coord.Y + i, "> " + option, tcell.StyleDefault.Bold(true))
         } else {
             DrawText(screen, s.Coord.X, s.Coord.Y + i, "  " + option)
         }
@@ -101,10 +105,10 @@ func (s *Selection) Show(screen tcell.Screen) int {
                 if s.Selected < len(s.Options) {
                     s.Selected++
                 }
-            case tcell.KeyEnter:
+            case tcell.KeyRight, tcell.KeyEnter:
                 return s.Selected
 
-            case tcell.KeyCtrlC:
+            case tcell.KeyLeft:
                 return -1
             }
         }
@@ -114,6 +118,7 @@ func (s *Selection) Show(screen tcell.Screen) int {
 
 // PARA INGRESAR TEXTO
 func (i *TextInput) draw(screen tcell.Screen) {
+    DrawText(screen, i.Coord.X, i.Coord.Y + 1, "                                                               ")
     FancyText(screen, i.Coord.X, i.Coord.Y, i.Title, tcell.StyleDefault.Bold(i.Bold).Foreground(i.Foreground).Background(i.Background))
     FancyText(screen, i.Coord.X, i.Coord.Y + 1, i.Value, tcell.StyleDefault.Foreground(i.Foreground).Background(i.Background))
 }
@@ -147,9 +152,9 @@ func (i *TextInput) Show(screen tcell.Screen) string {
                 if len(i.Value) > 0 {
                     i.Value = i.Value[:len(i.Value)-1]
                 }
-            case tcell.KeyEnter:
+            case tcell.KeyRight, tcell.KeyEnter:
                 return i.Value
-            case tcell.KeyCtrlC:
+            case tcell.KeyLeft:
                 return ""
             }
         }

@@ -1,16 +1,15 @@
 package src
 
 import (
+	"fmt"
 	"os"
 	"strconv"
-	"strings"
-	"time"
+	"unicode"
 
-	"github.com/go-vgo/robotgo"
 )
 
-func GetMacroList() []string {
-	files, _ := os.ReadDir("macros/")
+func GetMacroList(path string) []string {
+	files, _ := os.ReadDir(path)
 	var macros []string
 
 	for _, file := range files {
@@ -20,106 +19,205 @@ func GetMacroList() []string {
 	return macros
 }
 
-type Interpreter struct {
-	Macro   string
-	Actions []Action
+
+type TokenType int
+
+const (
+    TokenFunction TokenType = iota
+    TokenKeyword
+    TokenString
+    TokenNumber
+)
+
+var Keywords = [...]string{"loop", "end", "forever"}
+
+type Token struct {
+    Type TokenType
+    Value string
 }
 
-type Action struct {
-	Command string
-	Args    []interface{}
+type Parser struct {
+    Tokens []Token
+    pos int
 }
 
-func (interpreter *Interpreter) CompileToActions() []Action {
-	// gets first line of the file
-	file, _ := os.ReadFile(interpreter.Macro)
+type Lexer struct {
+    Source string
+    pos int
+}
 
-	var actions []Action
+type ASTNode struct {
+    Type TokenType
+    Value string
+    Children []*ASTNode
+}
 
-	for i, line := range strings.Split(string(file), "\n") {
-		action := Action{}
-		splitLine := strings.Split(line, "|")
+func NewParser(input string) *Parser {
+    lexer := NewLexer(input)
+    tokens := lexer.Tokenize()
+    return &Parser{Tokens: tokens}
+}
 
-		if len(splitLine) < 1 {
-			continue
-		}
 
-        if splitLine[0] == "" || strings.Contains(splitLine[0], "#") || i == 0 {
+func NewLexer(source string) *Lexer {
+    return &Lexer{Source: source}
+}
+
+func (l *Lexer) Tokenize() []Token {
+    var tokens []Token
+
+    for l.pos < len(l.Source) {
+
+        char := l.Source[l.pos]
+
+        switch {
+        case unicode.IsSpace(rune(char)):
+            l.pos++
             continue
-        }
+        case char == '"':
+            tokens = append(tokens, Token{Type: TokenString, Value: l.String()})
+        case unicode.IsDigit(rune(char)):
+            tokens = append(tokens, Token{Type: TokenNumber, Value: strconv.Itoa(l.Number())})
+        default:
+            value := l.readWord()
 
-		action.Command = splitLine[0]
-
-        switch action.Command {
-        case "keyboard":
-            switch splitLine[1] {
-            case "press":
-                action.Args = append(action.Args, splitLine[1], splitLine[2])
-            case "release":
-                action.Args = append(action.Args, splitLine[1], splitLine[2])
-            case "type":
-                action.Args = append(action.Args, splitLine[1])
-            }
-        case "delay":
-            dur, _ := time.ParseDuration(strings.Trim(splitLine[1], "\n"))
-            action.Args = append(action.Args, dur)
-        case "mouse":
-            switch splitLine[1] {
-            case "set":
-                x, _ := strconv.Atoi(splitLine[2])
-                y, _ := strconv.Atoi(splitLine[3])
-                action.Args = append(action.Args, splitLine[1], x, y)
-            case "click":
-                action.Args = append(action.Args, splitLine[1], splitLine[2])
-            case "down":
-                action.Args = append(action.Args, splitLine[1], splitLine[2])
-            case "up":
-                action.Args = append(action.Args, splitLine[1], splitLine[2])
-            case "scroll":
-                x, _ := strconv.Atoi(splitLine[2])
-                y, _ := strconv.Atoi(splitLine[3])
-                action.Args = append(action.Args, splitLine[1], x, y)
+            if l.IsKeyword(value) {
+                tokens = append(tokens, Token{Type: TokenKeyword, Value: value})
+            } else {
+                tokens = append(tokens, Token{Type: TokenFunction, Value: value})
             }
 
         }
+        l.pos++
+    }
 
-		actions = append(actions, action)
-	}
 
-	interpreter.Actions = actions
-	return actions
+    return tokens
 }
 
-func (interpreter *Interpreter) Run() {
-	for _, action := range interpreter.Actions {
-		switch action.Command {
-		case "keyboard":
-			switch action.Args[0] {
-			case "press":
-                robotgo.KeyToggle(action.Args[1].(string), "down")
-			case "release":
-                robotgo.KeyToggle(action.Args[1].(string), "up")
-			case "type":
-                robotgo.TypeStr(action.Args[1].(string))
-			}
-		case "delay":
-			if dur, ok := action.Args[0].(time.Duration); ok {
-				time.Sleep(dur)
-			}
-		case "mouse":
-			switch action.Args[0] {
-			case "set":
-                robotgo.Move(action.Args[1].(int), action.Args[2].(int))
-			case "click":
-                robotgo.Click(action.Args[1].(string), false)
-			case "down":
-                robotgo.Toggle(action.Args[1].(string), "down")
-			case "up":
-                robotgo.Toggle(action.Args[1].(string), "up")
-			case "scroll":
-                robotgo.Scroll(action.Args[1].(int), action.Args[2].(int))
-			}
-		}
-	}
+
+func (l *Lexer) IsKeyword(keyword string) bool {
+    for _, k := range Keywords {
+        if k == keyword {
+            return true
+        }
+    }
+
+    return false
+}
+
+func (l *Lexer) readWord() string {
+    var keyword string
+
+    for l.pos < len(l.Source) {
+        if unicode.IsSpace(rune(l.Source[l.pos])) {
+            break
+        }
+
+        keyword += string(l.Source[l.pos])
+        l.pos++
+    }
+
+    return keyword
+}
+
+func (l *Lexer) String() string {
+    var str string
+
+    l.pos++
+
+    for l.pos < len(l.Source) {
+        if l.Source[l.pos] == '"' {
+            break
+        }
+
+        str += string(l.Source[l.pos])
+        l.pos++
+    }
+
+    return str
+}
+
+func (l *Lexer) Number() int {
+    var num string
+
+    for l.pos < len(l.Source) {
+        if unicode.IsSpace(rune(l.Source[l.pos])) {
+            break
+        }
+
+        num += string(l.Source[l.pos])
+        l.pos++
+    }
+
+    n, _ := strconv.Atoi(num)
+    return n
+}
+
+func (p *Parser) Parse() *ASTNode {
+    parent := &ASTNode{Type: 0, Value: "root", Children: []*ASTNode{}}
+
+    // Example Syntax
+    /*
+    0 is Function
+    1 is Keyword
+    2 is String
+    3 is Number
+mouseset 10 10
+click "left"
+forever
+loop 3
+type "hello" 0.5
+end
+keypress "a"
+keyrelease "a"
+    */
+    for p.pos < len(p.Tokens) {
+        token := p.Tokens[p.pos]
+        
+        switch token.Type {
+        case TokenFunction:
+            parent.Children = append(parent.Children, &ASTNode{Type: TokenFunction, Value: token.Value})
+            p.pos++
+        case TokenKeyword:
+            keywordNode := &ASTNode{Type: TokenKeyword, Value: token.Value, Children: []*ASTNode{}}
+            parent.Children = append(parent.Children, keywordNode)
+            p.pos++
+
+
+
+            switch token.Value {
+            case "loop":
+                
+                keywordNode.Children = append(parent.Children, &ASTNode{Type: TokenNumber, Value: p.Tokens[p.pos].Value})
+                p.pos++
+
+                keywordNode.Children = p.Parse().Children
+                
+                if p.pos >= len(p.Tokens) {
+                    break
+                }
+
+            case "forever":
+                // no end keyword will stop this, this goes to the end of the file
+                for p.pos < len(p.Tokens) {
+                    keywordNode.Children = p.Parse().Children
+                }
+
+            case "end":
+                return parent
+            }
+
+
+        case TokenNumber:
+            parent.Children = append(parent.Children, &ASTNode{Type: TokenNumber, Value: token.Value})
+            p.pos++
+        case TokenString:
+            parent.Children = append(parent.Children, &ASTNode{Type: TokenString, Value: token.Value})
+            p.pos++
+        }
+    }
+
+    return parent
 }
 

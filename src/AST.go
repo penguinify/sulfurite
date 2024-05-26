@@ -1,7 +1,6 @@
 package src
 
 import (
-	"fmt"
 	"os"
 	"strconv"
 	"unicode"
@@ -157,21 +156,6 @@ func (l *Lexer) Number() int {
 func (p *Parser) Parse() *ASTNode {
     parent := &ASTNode{Type: 0, Value: "root", Children: []*ASTNode{}}
 
-    // Example Syntax
-    /*
-    0 is Function
-    1 is Keyword
-    2 is String
-    3 is Number
-mouseset 10 10
-click "left"
-forever
-loop 3
-type "hello" 0.5
-end
-keypress "a"
-keyrelease "a"
-    */
     for p.pos < len(p.Tokens) {
         token := p.Tokens[p.pos]
         
@@ -183,9 +167,6 @@ keyrelease "a"
             keywordNode := &ASTNode{Type: TokenKeyword, Value: token.Value, Children: []*ASTNode{}}
             parent.Children = append(parent.Children, keywordNode)
             p.pos++
-
-
-
             switch token.Value {
             case "loop":
                 
@@ -199,7 +180,6 @@ keyrelease "a"
                 }
 
             case "forever":
-                // no end keyword will stop this, this goes to the end of the file
                 for p.pos < len(p.Tokens) {
                     keywordNode.Children = p.Parse().Children
                 }

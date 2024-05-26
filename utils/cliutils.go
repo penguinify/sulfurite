@@ -30,6 +30,7 @@ type TextInput struct {
     Styling
 }
 
+
 func InitScreen() tcell.Screen {
     screen, err := tcell.NewScreen()
     if err != nil {

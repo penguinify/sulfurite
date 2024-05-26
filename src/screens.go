@@ -3,7 +3,8 @@ package src
 import (
 	"goco/utils"
 	"os"
-    "strings"
+	"strings"
+
 	"github.com/gdamore/tcell"
 )
 
@@ -31,8 +32,6 @@ func (gui *GUI) StartLoop(config *utils.ConfigJSON) {
     for {
         switch gui.Home() {
         case 1:
-            gui.RunMacro(config)
-        case 2:
             macroName := gui.NewMacro()
             if macroName == "" { continue }
 
@@ -41,13 +40,12 @@ func (gui *GUI) StartLoop(config *utils.ConfigJSON) {
             }
 
             file, _ := os.Create(config.MacrosPath + macroName + ".goco")
-            file.WriteString(config.MacroInterpreterVersion + "|Full| goco macro file starts below this line!")
 
             file.Close()
-        case 3:
+        case 2:
             gui.EditMacro(config)
 
-        case 5:
+        case 4:
             return
         }
     }
@@ -60,8 +58,8 @@ func (gui *GUI) Home() int  {
  
     selection := utils.Selection{
         Title: "",
-        Options: []string{"ᐅRun Macro", "+  New Macro", "✎Edit Macro", "≡Settings", "× Exit"},
-        Selected: 5,
+        Options: []string{"+  New Macro", "✎Macros", "≡Settings", "× Exit"},
+        Selected: 4,
         Coord: utils.Coord{X: 8, Y: 10},
     }
 
@@ -130,16 +128,18 @@ func (gui *GUI) EditMacro(config *utils.ConfigJSON) {
     
     options := utils.Selection{
         Title: selectedMacro,
-        Options: []string{"✎ Edit", "𝚃Rename", "⃠⃠⃠⃠⃠⃠⃠⃠", "⦸ Delete"},
+        Options: []string{"ᐅ Run", "✎ Edit", "𝚃Rename", "⃠⃠⃠⃠⃠⃠⃠⃠", "⦸ Delete"},
         Selected: 1,
         Coord: utils.Coord{X: 8, Y: 11},
     }
 
     gui.ResetScreen()
     switch options.Show(gui.screen) {
-        case -1, 3:
+        case -1, 4:
             return
-        case 2:
+        case 1:
+            gui.RunMacro(config.MacrosPath + selectedMacro)
+        case 3:
             gui.ResetScreen()
             newNameInput := utils.TextInput{
                 Title: "Enter the new name for the macro",
@@ -157,20 +157,38 @@ func (gui *GUI) EditMacro(config *utils.ConfigJSON) {
             } else {
                 os.Rename(config.MacrosPath + selectedMacro, config.MacrosPath + newName)
             }
-        case 4:
+        case 5:
             os.Remove(config.MacrosPath + selectedMacro)
             return
+
     }
 
 }
-func (gui *GUI) RunMacro(config *utils.ConfigJSON) {
-    macroName := gui.macroSelection(config.MacrosPath)
-    if macroName == "" {
-        return
-    }
+func (gui *GUI) RunMacro(macroPath string) {
     gui.ResetScreen()
-    utils.FancyText(gui.screen, 10, 7, "Compiling macro...", tcell.StyleDefault.Foreground(tcell.Color117))
-    gui.ResetScreen()
-    utils.FancyText(gui.screen, 10, 7, "Running macro...", tcell.StyleDefault.Foreground(tcell.Color117))
+    utils.FancyText(gui.screen, 10, 10, "Compiling macro...", tcell.StyleDefault.Foreground(tcell.Color117))
 
+    file, _ := os.ReadFile(macroPath)
+    parser := NewParser(string(file))
+
+    ast := parser.Parse()
+
+    gui.ResetScreen()
+    utils.FancyText(gui.screen, 10, 10, "Running macro...", tcell.StyleDefault.Foreground(tcell.Color117))
+    utils.FancyText(gui.screen, 10, 11, "Press Ctrl+C to exit", tcell.StyleDefault.Foreground(tcell.Color117))
+
+    interupted := make(chan bool)
+    go Interpret(ast, interupted)
+
+    for {
+        ev := gui.screen.PollEvent()
+        switch ev := ev.(type) {
+        case *tcell.EventKey:
+            if ev.Key() == tcell.KeyCtrlC {
+                utils.FancyText(gui.screen, 10, 12, "Waiting until next instruction to quit...", tcell.StyleDefault.Foreground(tcell.Color117))
+                interupted <- true
+                return
+            }
+        }
+    }
 }

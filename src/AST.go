@@ -54,6 +54,8 @@ const (
 
 var Keywords = [...]string{"loop", "end", "forever"}
 
+var HigherLevelKeywords = [...]string{"loop", "forever", "root"}
+
 type Token struct {
     Type TokenType
     Value string
@@ -62,6 +64,16 @@ type Token struct {
 type Parser struct {
     Tokens []Token
     pos int
+}
+
+func IsInSlice(array []string, value string) bool {
+    for _, v := range array {
+        if v == value {
+            return true
+        }
+    }
+
+    return false
 }
 
 type Lexer struct {
@@ -80,7 +92,6 @@ func NewParser(input string) *Parser {
     tokens := lexer.Tokenize()
     return &Parser{Tokens: tokens}
 }
-
 
 func NewLexer(source string) *Lexer {
     return &Lexer{Source: source}
@@ -104,7 +115,7 @@ func (l *Lexer) Tokenize() []Token {
         default:
             value := l.readWord()
 
-            if l.IsKeyword(value) {
+            if IsInSlice(Keywords[:], value) {
                 tokens = append(tokens, Token{Type: TokenKeyword, Value: value})
             } else {
                 tokens = append(tokens, Token{Type: TokenFunction, Value: value})
@@ -119,15 +130,6 @@ func (l *Lexer) Tokenize() []Token {
 }
 
 
-func (l *Lexer) IsKeyword(keyword string) bool {
-    for _, k := range Keywords {
-        if k == keyword {
-            return true
-        }
-    }
-
-    return false
-}
 
 func (l *Lexer) readWord() string {
     var keyword string
@@ -194,7 +196,7 @@ func (p *Parser) Parse() *ASTNode {
             switch token.Value {
             case "loop":
                 
-                keywordNode.Children = append(parent.Children, &ASTNode{Type: TokenNumber, Value: p.Tokens[p.pos].Value})
+                parent.Children = append(parent.Children, &ASTNode{Type: TokenNumber, Value: p.Tokens[p.pos].Value})
                 p.pos++
 
                 keywordNode.Children = p.Parse().Children

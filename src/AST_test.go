@@ -40,15 +40,6 @@ func TestTokenize(t *testing.T) {
 	}
 }
 
-func TestIsKeyword(t *testing.T) {
-	lexer := NewLexer("test")
-	if !lexer.IsKeyword("loop") {
-		t.Errorf("Expected 'loop' to be a keyword")
-	}
-	if lexer.IsKeyword("notakeyword") {
-		t.Errorf("Expected 'notakeyword' to not be a keyword")
-	}
-}
 
 func TestReadWord(t *testing.T) {
 	lexer := NewLexer("test")
@@ -75,7 +66,7 @@ func TestNumber(t *testing.T) {
 }
 
 func TestParse(t *testing.T) {
-	parser := NewParser("loop 3")
+	parser := NewParser("loop 3\nmouseset 100 100")
 	ast := parser.Parse()
 	if ast == nil {
 		t.Errorf("Expected an AST, got nil")

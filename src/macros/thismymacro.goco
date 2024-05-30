@@ -1,0 +1,7 @@
+sleep 5000
+loop 500
+mousedown
+sleep 10
+mouseup
+sleep 10
+end

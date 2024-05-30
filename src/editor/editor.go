@@ -25,6 +25,10 @@ func (s *Server) Start() Server {
 
     go func() {
         if err := s.Server.ListenAndServe(); err != nil {
+            // removes if the server was closed
+            if err == http.ErrServerClosed {
+                return
+            }
             fmt.Printf("Failed to start server: %v\n", err)
         }
     }()

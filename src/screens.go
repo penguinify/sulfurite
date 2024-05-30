@@ -22,8 +22,10 @@ func (gui *GUI) ResetScreen() {
     gui.screen.Clear()
     utils.FancyText(gui.screen, 10, 5, "goco — macros/automations", tcell.StyleDefault.Bold(true).Foreground(tcell.Color81))
 
-    utils.FancyText(gui.screen, 10, 19, "left arrow to go back | right arrow to select | up and down arrows to move", tcell.StyleDefault.Foreground(tcell.Color195))
-    utils.FancyText(gui.screen, 10, 20, "by @penguinify", tcell.StyleDefault.Foreground(tcell.Color195))
+    utils.FancyText(gui.screen, 10, 19, "left arrow to go back", tcell.StyleDefault.Foreground(tcell.Color195))
+    utils.FancyText(gui.screen, 10, 20, "right arrow to select", tcell.StyleDefault.Foreground(tcell.Color195))
+    utils.FancyText(gui.screen, 10, 21, "up and down arrows to move", tcell.StyleDefault.Foreground(tcell.Color195))
+    utils.FancyText(gui.screen, 10, 23, "by @penguinify", tcell.StyleDefault.Foreground(tcell.Color195))
     gui.screen.Show()
 }
 
@@ -195,7 +197,13 @@ func (gui *GUI) RunMacro(macroPath string) {
     utils.FancyText(gui.screen, 10, 11, "Press Ctrl+C to exit", tcell.StyleDefault.Foreground(tcell.Color117))
 
     interupted := make(chan bool)
-    go Interpret(ast, interupted)
+    go func() {
+        _, err := Interpret(ast, interupted)
+
+        if err != nil {
+            utils.FancyText(gui.screen, 10, 12, err.Error(), tcell.StyleDefault.Foreground(tcell.Color117))
+        }
+    }()
 
     for {
         ev := gui.screen.PollEvent()

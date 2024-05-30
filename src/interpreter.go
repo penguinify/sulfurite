@@ -9,8 +9,9 @@ import (
 )
 
 func Interpret(ast *ASTNode, interupted <-chan bool) (bool, error) {
-    if ast.Value != "root" {
-        return false, errors.New("Invalid AST, Node must be root")
+
+    if !IsInSlice(HigherLevelKeywords[:], ast.Value) {
+        return false, errors.New("Invalid root node, Must be a higher level keyword")
     }
 
     pos := 0
@@ -59,6 +60,27 @@ func Interpret(ast *ASTNode, interupted <-chan bool) (bool, error) {
             default:
             }
         case TokenKeyword:
+            switch child.Value {
+            case "loop":
+                pos++
+                count, _ := strconv.Atoi(ast.Children[pos].Value)
+                for i := 0; i < count; i++ {
+                    _, err := Interpret(child, interupted)
+                    if err != nil {
+                        return false, err
+                    }
+                }
+            case "forever":
+                for {
+                    _, err := Interpret(child, interupted)
+                    if err != nil {
+                        return false, err
+                    }
+                }
+            case "end":
+                return true, nil
+            default:
+            }
         case TokenString:
         case TokenNumber:
 
@@ -69,12 +91,12 @@ func Interpret(ast *ASTNode, interupted <-chan bool) (bool, error) {
 
         select {
         case <-interupted:
-            return false, nil
+            return false, errors.New("Interupted")
         default:
-            continue
         }
+
     }   
 
-    <- interupted
+    <-interupted
     return true, nil
 }

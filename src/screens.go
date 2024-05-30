@@ -4,6 +4,7 @@ import (
 	"goco/utils"
 	"os"
 	"strings"
+    "goco/src/editor"
 
 	"github.com/gdamore/tcell"
 )
@@ -19,9 +20,9 @@ func NewGUI(screen tcell.Screen) *GUI {
 
 func (gui *GUI) ResetScreen() {
     gui.screen.Clear()
-    utils.FancyText(gui.screen, 10, 5, "goco -- macros/automations cli", tcell.StyleDefault.Bold(true).Foreground(tcell.Color81))
-    utils.FancyText(gui.screen, 10, 6, "BACK←UP↑DOWN↓SELECT→", tcell.StyleDefault.Foreground(tcell.Color117))
+    utils.FancyText(gui.screen, 10, 5, "goco — macros/automations", tcell.StyleDefault.Bold(true).Foreground(tcell.Color81))
 
+    utils.FancyText(gui.screen, 10, 19, "left arrow to go back | right arrow to select | up and down arrows to move", tcell.StyleDefault.Foreground(tcell.Color195))
     utils.FancyText(gui.screen, 10, 20, "by @penguinify", tcell.StyleDefault.Foreground(tcell.Color195))
     gui.screen.Show()
 }
@@ -58,7 +59,7 @@ func (gui *GUI) Home() int  {
  
     selection := utils.Selection{
         Title: "",
-        Options: []string{"+  New Macro", "✎Macros", "≡Settings", "× Exit"},
+        Options: []string{"+  New Macro", "✎Macros", "≡Import", "× Exit"},
         Selected: 4,
         Coord: utils.Coord{X: 8, Y: 10},
     }
@@ -136,9 +137,25 @@ func (gui *GUI) EditMacro(config *utils.ConfigJSON) {
     gui.ResetScreen()
     switch options.Show(gui.screen) {
         case -1, 4:
+            defer gui.EditMacro(config)
             return
         case 1:
             gui.RunMacro(config.MacrosPath + selectedMacro)
+        case 2:
+            s := &editor.Server{
+                Addr: "8080",
+            }
+            Server := s.Start()
+            defer Server.Server.Close()
+
+            gui.ResetScreen()
+
+            utils.FancyText(gui.screen, 10, 10, "Opening editor...", tcell.StyleDefault.Foreground(tcell.Color117))
+            utils.FancyText(gui.screen, 10, 11, "Press any key to quit the editor", tcell.StyleDefault.Foreground(tcell.Color117))
+
+            utils.WaitUntilKey(gui.screen)
+            return            
+
         case 3:
             gui.ResetScreen()
             newNameInput := utils.TextInput{

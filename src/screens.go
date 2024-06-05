@@ -215,6 +215,9 @@ func (gui *GUI) RunMacro(macroPath string) {
         if err != nil {
             utils.FancyText(gui.screen, 10, 12, err.Error(), colorBright)
         }
+
+        <-interupted
+
     }()
 
     for {

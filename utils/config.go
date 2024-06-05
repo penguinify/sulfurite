@@ -7,7 +7,7 @@ import (
 
 type ConfigJSON struct {
     MacrosPath string
-    Version string
+    MacroEditorVersion string
     MacroInterpreterVersion string
 }
 

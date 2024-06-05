@@ -1,5 +1,5 @@
 {
     "macrosPath": "src/macros/",
-    "version": "1.0.0",
-    "macroInterpreterVersion": "1.0"
+    "macroEditorVersion": "0.1.0",
+    "macroInterpreterVersion": "0.1.0"
 }

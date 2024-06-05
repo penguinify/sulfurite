@@ -7,6 +7,8 @@ import (
 	"time"
 
 	"github.com/go-vgo/robotgo"
+
+    "sulfurite/utils"
 )
 
 
@@ -23,9 +25,15 @@ func ConvertNumber(n interface{}) int {
 }
 
 func Interpret(ast *ASTNode, interupted <-chan bool) (bool, error) {
+    var interpreterVersion = utils.LoadConfig("config.json").MacroInterpreterVersion
 
     if !IsInSlice(HigherLevelKeywords[:], ast.Value.(string)) {
         return false, errors.New("Invalid root node, Must be a higher level keyword")
+    } else if ast.Value == "root" {
+        
+        if ast.Children[0].Value != interpreterVersion {
+            return false, errors.New("Invalid interpreter version! Please update or downgrade to avoid compatibility issues.")
+        }
     }
 
     pos := 0

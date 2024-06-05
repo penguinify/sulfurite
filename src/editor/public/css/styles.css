@@ -14,15 +14,21 @@ body {
   font-family: 'Baloo 2';
   font-weight: 400;
   margin: 0;
-  padding: 3rem;
+  padding: 1rem 3rem 3rem 3rem;
 
   background-color: var(--background);
   height: 100vh;
   width: 100vw;
+
+  overflow: hidden;
+
+  div {
+      overflow: hidden;
+  }
 }
 
 
-.rounded {border-radius: 0.5rem;}
+.rounded {border-radius: 1rem;}
 
 .container {
   display: flex;
@@ -39,12 +45,9 @@ body {
 
 }
 
-.editor-width {
-    width: 60%;
-}
-
-.text-container-width {
-    width: 40%;
+.flex {
+    display: flex;
+    flex-direction: column;
 }
 
 .flex-row {
@@ -67,15 +70,3 @@ body {
     gap: 3rem;
 }
 
-textarea {
-    background-color: transparent;
-    font-size: 1rem;
-    font-family: 'Baloo 2';
-    color: var(--text);
-    border: none;
-    resize: none;
-
-    &:focus {
-        outline: none;
-    }
-}

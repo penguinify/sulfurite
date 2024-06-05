@@ -1,4 +1,4 @@
-module goco
+module sulfurite
 
 go 1.22.3
 

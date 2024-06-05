@@ -1,10 +1,10 @@
 package src
 
 import (
-	"goco/utils"
+	"sulfurite/utils"
 	"os"
 	"strings"
-    "goco/src/editor"
+    "sulfurite/src/editor"
 
 	"github.com/gdamore/tcell"
 )
@@ -14,18 +14,29 @@ type GUI struct {
     screen tcell.Screen
 }
 
+var (
+    colorBright = tcell.StyleDefault.Foreground(tcell.Color117)
+    colorDark = tcell.StyleDefault.Foreground(tcell.Color45)
+)
+
 func NewGUI(screen tcell.Screen) *GUI {
     return &GUI{screen: screen}
 }
 
 func (gui *GUI) ResetScreen() {
     gui.screen.Clear()
-    utils.FancyText(gui.screen, 10, 5, "goco — macros/automations", tcell.StyleDefault.Bold(true).Foreground(tcell.Color81))
+    utils.ASCIIArt(gui.screen, 9, 4, []string{
+        "            _  __            _ _       ",
+        "  ___ _   _| |/ _|_   _ _ __(_) |_ ___ ",
+        " / __| | | | | |_| | | | '__| | __/ _ \\",
+        " \\__ \\ |_| | |  _| |_| | |  | | ||  __/",
+        " |___/\\__,_|_|_|  \\__,_|_|  |_|\\__\\___|",
+    }, colorBright)
 
-    utils.FancyText(gui.screen, 10, 19, "left arrow to go back", tcell.StyleDefault.Foreground(tcell.Color195))
-    utils.FancyText(gui.screen, 10, 20, "right arrow to select", tcell.StyleDefault.Foreground(tcell.Color195))
-    utils.FancyText(gui.screen, 10, 21, "up and down arrows to move", tcell.StyleDefault.Foreground(tcell.Color195))
-    utils.FancyText(gui.screen, 10, 23, "by @penguinify", tcell.StyleDefault.Foreground(tcell.Color195))
+    utils.FancyText(gui.screen, 10, 19, "left arrow to go back", colorDark)
+    utils.FancyText(gui.screen, 10, 20, "right arrow to select", colorDark)
+    utils.FancyText(gui.screen, 10, 21, "up and down arrows to move", colorDark)
+    utils.FancyText(gui.screen, 10, 23, "by @penguinify", colorDark)
     gui.screen.Show()
 }
 
@@ -42,7 +53,7 @@ func (gui *GUI) StartLoop(config *utils.ConfigJSON) {
                 os.Mkdir(config.MacrosPath, 0755)
             }
 
-            file, _ := os.Create(config.MacrosPath + macroName + ".goco")
+            file, _ := os.Create(config.MacrosPath + macroName + ".sulfurite")
 
             file.Close()
         case 2:
@@ -94,8 +105,8 @@ func (gui *GUI) macroSelection(path string) string {
     options := GetMacroList(path)
 
     if len(options) == 0 {
-        utils.FancyText(gui.screen, 10, 11, "No macros found", tcell.StyleDefault.Foreground(tcell.Color117).Bold(true))
-        utils.FancyText(gui.screen, 10, 12, "Press any key to continue", tcell.StyleDefault.Foreground(tcell.Color117))
+        utils.FancyText(gui.screen, 10, 11, "No macros found", colorBright.Bold(true))
+        utils.FancyText(gui.screen, 10, 12, "Press any key to continue", colorBright)
 
         gui.screen.Show()
 
@@ -146,14 +157,15 @@ func (gui *GUI) EditMacro(config *utils.ConfigJSON) {
         case 2:
             s := &editor.Server{
                 Addr: "8080",
+                File: selectedMacro,
             }
             Server := s.Start()
-            defer Server.Server.Close()
+            defer Server.Server.Shutdown(nil)
 
             gui.ResetScreen()
 
-            utils.FancyText(gui.screen, 10, 10, "Opening editor...", tcell.StyleDefault.Foreground(tcell.Color117))
-            utils.FancyText(gui.screen, 10, 11, "Press any key to quit the editor", tcell.StyleDefault.Foreground(tcell.Color117))
+            utils.FancyText(gui.screen, 10, 10, "Opening editor...", colorBright)
+            utils.FancyText(gui.screen, 10, 11, "Press any key to quit the editor", colorBright)
 
             utils.WaitUntilKey(gui.screen)
             return            
@@ -185,7 +197,7 @@ func (gui *GUI) EditMacro(config *utils.ConfigJSON) {
 }
 func (gui *GUI) RunMacro(macroPath string) {
     gui.ResetScreen()
-    utils.FancyText(gui.screen, 10, 10, "Compiling macro...", tcell.StyleDefault.Foreground(tcell.Color117))
+    utils.FancyText(gui.screen, 10, 10, "Compiling macro...", colorBright)
 
     file, _ := os.ReadFile(macroPath)
     parser := NewParser(string(file))
@@ -193,15 +205,15 @@ func (gui *GUI) RunMacro(macroPath string) {
     ast := parser.Parse()
 
     gui.ResetScreen()
-    utils.FancyText(gui.screen, 10, 10, "Running macro...", tcell.StyleDefault.Foreground(tcell.Color117))
-    utils.FancyText(gui.screen, 10, 11, "Press Ctrl+C to exit", tcell.StyleDefault.Foreground(tcell.Color117))
+    utils.FancyText(gui.screen, 10, 10, "Running macro...", colorBright)
+    utils.FancyText(gui.screen, 10, 11, "Press Ctrl+C to exit", colorBright)
 
     interupted := make(chan bool)
     go func() {
         _, err := Interpret(ast, interupted)
 
         if err != nil {
-            utils.FancyText(gui.screen, 10, 12, err.Error(), tcell.StyleDefault.Foreground(tcell.Color117))
+            utils.FancyText(gui.screen, 10, 12, err.Error(), colorBright)
         }
     }()
 
@@ -210,7 +222,7 @@ func (gui *GUI) RunMacro(macroPath string) {
         switch ev := ev.(type) {
         case *tcell.EventKey:
             if ev.Key() == tcell.KeyCtrlC {
-                utils.FancyText(gui.screen, 10, 12, "Waiting until next instruction to quit...", tcell.StyleDefault.Foreground(tcell.Color117))
+                utils.FancyText(gui.screen, 10, 12, "Waiting until next instruction to quit...", colorBright)
                 interupted <- true
                 return
             }

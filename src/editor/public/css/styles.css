@@ -1,0 +1,81 @@
+
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;   
+
+    color: var(--text);
+
+}
+
+
+body {
+  font-family: 'Baloo 2';
+  font-weight: 400;
+  margin: 0;
+  padding: 3rem;
+
+  background-color: var(--background);
+  height: 100vh;
+  width: 100vw;
+}
+
+
+.rounded {border-radius: 0.5rem;}
+
+.container {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  height: 100%;
+  padding: 1rem;
+
+  text-align: left;
+
+  background-color: var(--background-100);
+  
+
+}
+
+.editor-width {
+    width: 60%;
+}
+
+.text-container-width {
+    width: 40%;
+}
+
+.flex-row {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
+}
+
+.full {
+    width: 100%;
+    height: 100%;
+}
+
+.full-width {
+    width: 100%;
+}
+
+.gap {
+    gap: 3rem;
+}
+
+textarea {
+    background-color: transparent;
+    font-size: 1rem;
+    font-family: 'Baloo 2';
+    color: var(--text);
+    border: none;
+    resize: none;
+
+    &:focus {
+        outline: none;
+    }
+}

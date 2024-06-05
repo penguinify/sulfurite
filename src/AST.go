@@ -4,7 +4,6 @@ import (
 	"os"
 	"strconv"
 	"unicode"
-
 )
 
 func GetMacroList(path string) []string {
@@ -50,6 +49,7 @@ const (
     TokenKeyword
     TokenString
     TokenNumber
+    TokenRandomNumber
 )
 
 var Keywords = [...]string{"loop", "end", "forever"}
@@ -58,7 +58,7 @@ var HigherLevelKeywords = [...]string{"loop", "forever", "root"}
 
 type Token struct {
     Type TokenType
-    Value string
+    Value interface{}
 }
 
 type Parser struct {
@@ -83,8 +83,13 @@ type Lexer struct {
 
 type ASTNode struct {
     Type TokenType
-    Value string
+    Value interface{}
     Children []*ASTNode
+}
+
+type Range struct {
+    Start int
+    End int
 }
 
 func NewParser(input string) *Parser {
@@ -112,6 +117,8 @@ func (l *Lexer) Tokenize() []Token {
             tokens = append(tokens, Token{Type: TokenString, Value: l.String()})
         case unicode.IsDigit(rune(char)):
             tokens = append(tokens, Token{Type: TokenNumber, Value: strconv.Itoa(l.Number())})
+        case char == '~':
+            tokens = append(tokens, Token{Type: TokenRandomNumber, Value: l.RandomNumber()})
         default:
             value := l.readWord()
 
@@ -167,7 +174,7 @@ func (l *Lexer) Number() int {
     var num string
 
     for l.pos < len(l.Source) {
-        if unicode.IsSpace(rune(l.Source[l.pos])) {
+        if unicode.IsSpace(rune(l.Source[l.pos])) || l.Source[l.pos] == '-' {
             break
         }
 
@@ -177,6 +184,23 @@ func (l *Lexer) Number() int {
 
     n, _ := strconv.Atoi(num)
     return n
+}
+
+func (l *Lexer) RandomNumber() Range  {
+    // Random number looks like this:
+    // ~100-200
+
+    l.pos++
+
+
+    var tokenrange Range = Range{}
+
+    tokenrange.Start =  l.Number()
+    l.pos++
+    tokenrange.End = l.Number()
+
+    return tokenrange
+
 }
 
 func (p *Parser) Parse() *ASTNode {
@@ -217,6 +241,9 @@ func (p *Parser) Parse() *ASTNode {
 
         case TokenNumber:
             parent.Children = append(parent.Children, &ASTNode{Type: TokenNumber, Value: token.Value})
+            p.pos++
+        case TokenRandomNumber:
+            parent.Children = append(parent.Children, &ASTNode{Type: TokenRandomNumber, Value: token.Value})
             p.pos++
         case TokenString:
             parent.Children = append(parent.Children, &ASTNode{Type: TokenString, Value: token.Value})

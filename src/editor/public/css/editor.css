@@ -1,0 +1,8 @@
+.editor {
+    div {
+        background-color: var(--background-200);
+        padding: 0.5rem;
+        border-radius: 0.5rem;
+        margin-bottom: 1rem;
+    }
+}

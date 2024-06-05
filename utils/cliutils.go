@@ -64,6 +64,12 @@ func FancyText(screen tcell.Screen, x int, y int, text string, style tcell.Style
     screen.Show()
 }
 
+func ASCIIArt(screen tcell.Screen, x int, y int, art []string, style tcell.Style) {
+    for i, line := range art {
+        FancyText(screen, x, y + i, line, style)
+    }
+}
+
 
 func DrawText(screen tcell.Screen, x int, y int, text string) {
     for i, char := range text {

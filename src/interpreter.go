@@ -2,15 +2,29 @@ package src
 
 import (
 	"errors"
+	"math/rand/v2"
 	"strconv"
 	"time"
 
 	"github.com/go-vgo/robotgo"
 )
 
+
+func ConvertNumber(n interface{}) int {
+    switch n.(type) {
+    case string:
+        num, _ := strconv.Atoi(n.(string))
+        return num
+    case Range:
+        return rand.IntN(n.(Range).End+1 - n.(Range).Start)
+    default:
+        return 0
+    }
+}
+
 func Interpret(ast *ASTNode, interupted <-chan bool) (bool, error) {
 
-    if !IsInSlice(HigherLevelKeywords[:], ast.Value) {
+    if !IsInSlice(HigherLevelKeywords[:], ast.Value.(string)) {
         return false, errors.New("Invalid root node, Must be a higher level keyword")
     }
 
@@ -25,10 +39,62 @@ func Interpret(ast *ASTNode, interupted <-chan bool) (bool, error) {
             switch child.Value {
             case "mouseset":
                 pos++
-                x, _ := strconv.Atoi(ast.Children[pos].Value)
+                x := ConvertNumber(ast.Children[pos].Value)
                 pos++
-                y, _ := strconv.Atoi(ast.Children[pos].Value)
-                robotgo.Move(x, y)
+                y := ConvertNumber(ast.Children[pos].Value)
+                pos++
+                smooth := ConvertNumber(ast.Children[pos].Value)
+
+                if smooth == 0 {
+                    robotgo.Move(x, y)
+                } else {
+                    pos++
+                    time := ConvertNumber(ast.Children[pos].Value)
+                    pos++
+                    speed := ConvertNumber(ast.Children[pos].Value)
+                    robotgo.MoveSmooth(x, y, float64(time), float64(speed))
+                }
+            case "mousemove":
+                pos++
+                x := ConvertNumber(ast.Children[pos].Value)
+                pos++
+                y := ConvertNumber(ast.Children[pos].Value)
+                pos++
+                smooth := ConvertNumber(ast.Children[pos].Value)
+                
+                if smooth == 0 {
+                    robotgo.MoveRelative(x, y)
+                } else {
+                    pos++
+                    time := ConvertNumber(ast.Children[pos].Value)
+                    pos++
+                    speed := ConvertNumber(ast.Children[pos].Value)
+                    robotgo.MoveSmoothRelative(x, y, float64(time), float64(speed))
+                }
+            case "scroll":
+                pos++
+                x := ConvertNumber(ast.Children[pos].Value)
+                pos++
+                y := ConvertNumber(ast.Children[pos].Value)
+                pos++
+                smooth := ConvertNumber(ast.Children[pos].Value)
+
+                if smooth == 0 {
+                    robotgo.Scroll(x, y)
+                } else {
+                    pos++
+                    time := ConvertNumber(ast.Children[pos].Value)
+                    pos++
+                    speed := ConvertNumber(ast.Children[pos].Value)
+                    robotgo.ScrollSmooth(x, y, time, speed)
+                }
+            case "drag":
+                pos++
+                x := ConvertNumber(ast.Children[pos].Value)
+                pos++
+                y := ConvertNumber(ast.Children[pos].Value)
+
+                robotgo.DragSmooth(x, y)
             case "mousedown":
                 pos++
                 button := ast.Children[pos].Value
@@ -40,22 +106,24 @@ func Interpret(ast *ASTNode, interupted <-chan bool) (bool, error) {
             case "keydown":
                 pos++
                 key := ast.Children[pos].Value
-                robotgo.KeyToggle(key, "down")
+                robotgo.KeyToggle(key.(string), "down")
             case "keyup":
                 pos++
                 key := ast.Children[pos].Value
-                robotgo.KeyToggle(key, "up")
+                robotgo.KeyToggle(key.(string), "up")
+            case "keytap":
+                pos++
+                key := ast.Children[pos].Value
+                robotgo.KeyTap(key.(string))
             case "type":
                 pos++
                 text := ast.Children[pos].Value
-                pos++
-                speed, _ := strconv.Atoi(ast.Children[pos].Value)
 
-                robotgo.TypeStr(text, speed)
+                robotgo.TypeStr(text.(string))
 
             case "sleep":
                 pos++
-                duration, _ := strconv.Atoi(ast.Children[pos].Value)
+                duration := ConvertNumber(ast.Children[pos].Value)
                 time.Sleep(time.Duration(duration) * time.Millisecond)
             default:
             }
@@ -63,12 +131,13 @@ func Interpret(ast *ASTNode, interupted <-chan bool) (bool, error) {
             switch child.Value {
             case "loop":
                 pos++
-                count, _ := strconv.Atoi(ast.Children[pos].Value)
+                count := ConvertNumber(ast.Children[pos].Value)
                 for i := 0; i < count; i++ {
                     _, err := Interpret(child, interupted)
                     if err != nil {
                         return false, err
                     }
+
                 }
             case "forever":
                 for {
@@ -78,10 +147,13 @@ func Interpret(ast *ASTNode, interupted <-chan bool) (bool, error) {
                     }
                 }
             case "end":
-                return true, nil
+                if ast.Value == "loop" {
+                    return true, nil
+                }
             default:
             }
         case TokenString:
+        case TokenRandomNumber:
         case TokenNumber:
 
         default:
@@ -97,6 +169,8 @@ func Interpret(ast *ASTNode, interupted <-chan bool) (bool, error) {
 
     }   
 
-    <-interupted
+    if ast.Value == "root" {
+        <-interupted
+    }
     return true, nil
 }

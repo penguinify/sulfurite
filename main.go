@@ -1,8 +1,8 @@
 package main
 
 import (
-    "goco/utils"
-    "goco/src"
+    "sulfurite/utils"
+    "sulfurite/src"
 )
 
 func main() {
@@ -14,5 +14,4 @@ func main() {
 
     gui := src.NewGUI(screen)
     gui.StartLoop(config)
-
 }

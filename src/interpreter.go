@@ -32,7 +32,7 @@ func Interpret(ast *ASTNode, interupted <-chan bool) (bool, error) {
     } else if ast.Value == "root" {
         
         if ast.Children[0].Value != interpreterVersion {
-            return false, errors.New("Invalid interpreter version! Please update or downgrade to avoid compatibility issues.")
+            return false, errors.New("Invalid interpreter version! Please update or downgrade to avoid compatibility issues. (Current version: " + interpreterVersion + ", Macro version: " + ast.Children[0].Value.(string) + ")")
         }
     }
 

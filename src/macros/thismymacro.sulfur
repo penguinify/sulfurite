@@ -1,9 +1,19 @@
-1.0.0
+1
+sleep 3000
 forever
-mousemove -300 -300 1 10 3
-
-mousemove -300 300 1 10 3
-
-mousemove 300 300 1 10 3
-
-mousemove 300 -300 1 10 3
+keydown "w"
+sleep 1000
+keyup "w"
+sleep 1000
+keydown "a"
+sleep 1000
+keyup "a"
+sleep 1000
+keydown "s"
+sleep 1000
+keyup "s"
+sleep 1000
+keydown "d"
+sleep 1000
+keyup "d"
+sleep 1000

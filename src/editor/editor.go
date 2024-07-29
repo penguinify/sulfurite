@@ -98,7 +98,7 @@ func sendFileContent(w http.ResponseWriter, r *http.Request) {
             return
         }
 
-        content, err := os.ReadFile("./src/macros/" + file)
+        content, err := os.ReadFile(file)
         if err != nil {
             fmt.Fprintf(w, "Error reading file: %v", err)
             return

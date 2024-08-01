@@ -25,7 +25,7 @@ jobs:
     steps:
     - uses: actions/checkout@v4
     - name: Install gcc
-      run: sudo apt-get update && sudo apt-get install -y gcc
+      run: sudo apt-get update && sudo apt-get install -y gcc libc6-dev libx11-dev xorg-dev libxtst-dev xsel xclip libpng++-dev xcb libxcb-xkb-dev x11-xkb-utils libx11-xcb-dev libxkbcommon-x11-dev libxkbcommon-dev
     - uses: wangyoucao577/go-release-action@v1
       with:
         github_token: ${{ secrets.GITHUB_TOKEN }}
@@ -35,5 +35,4 @@ jobs:
         project_path: "./"
         binary_name: "sulfurite"
         extra_files: LICENSE README.md
-        pre_command: "go env -w CGO_ENABLED=1"
 

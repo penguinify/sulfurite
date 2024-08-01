@@ -1,5 +1,23 @@
 @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;700&display=swap');
 
+@keyframes fadein {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes left-to-right {
+    from {
+        transform: translateX(-100%);
+    }
+    to {
+        transform: translateX(0%);
+    }
+}
+
 
 ::-webkit-scrollbar {
     width: 0.5rem;
@@ -133,7 +151,7 @@ body {
 
         .instruction {
             background-color: var(--ctp-frappe-base);
-            height: 3rem;
+            height: 3vh;
 
             width: max-content;
 
@@ -145,6 +163,37 @@ body {
             align-items: center;
             
             box-sizing: border-box;
+
+            transform: translateX(-100%);
+            opacity: 0;
+
+            animation: fadein 1s forwards, left-to-right 1s forwards;
+
+            span {
+                user-select: none;
+                -webkit-user-select: none;
+            }
+
+        }
+
+        .spacer {
+            background-color: var(--ctp-frappe-base);
+            height: 3vh;
+
+            width: max-content;
+
+            border-radius: 0.6rem;
+
+            padding: 1rem;
+
+            display: none;
+            opacity: 0;
+            align-items: center;
+            
+            box-sizing: border-box;
+
+
+
         }
     }
 }

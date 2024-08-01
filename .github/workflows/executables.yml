@@ -35,4 +35,5 @@ jobs:
         project_path: "./"
         binary_name: "sulfurite"
         extra_files: LICENSE README.md
+        pre_command: "go env -w CGO_ENABLED=1"
 
